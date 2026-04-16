@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Server, Box, Rocket, Layers,
   Network, Shield, Settings, ChevronLeft, ChevronRight,
@@ -41,7 +41,7 @@ const NAV_SECTIONS = [
 export default function Sidebar({ collapsed, onToggle }) {
   return (
     <aside className={clsx(
-      'flex flex-col h-full bg-surface-850 border-r border-surface-700 transition-all duration-300 flex-shrink-0',
+      'flex flex-col h-full bg-surface-850/85 border-r border-surface-700/70 backdrop-blur-md transition-all duration-300 flex-shrink-0',
       collapsed ? 'w-[60px]' : 'w-[220px]',
     )}>
       {/* Logo */}
@@ -49,19 +49,19 @@ export default function Sidebar({ collapsed, onToggle }) {
         'flex items-center h-14 border-b border-surface-700 flex-shrink-0 transition-all duration-300',
         collapsed ? 'px-3 justify-center' : 'px-4 gap-3',
       )}>
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center shadow-glow flex-shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center shadow-glow flex-shrink-0">
           <Cpu size={16} className="text-white" />
         </div>
         {!collapsed && (
           <div className="animate-fade-in">
             <p className="text-sm font-bold gradient-text leading-none">K8s Dash</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">Control Plane</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">Cluster Studio</p>
           </div>
         )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 no-scrollbar">
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 no-scrollbar" aria-label="Primary">
         {NAV_SECTIONS.map(section => (
           <div key={section.title} className="mb-1">
             {!collapsed && (

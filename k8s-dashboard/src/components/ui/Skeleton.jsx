@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 
 export function Skeleton({ className }) {
-  return <div className={clsx('skeleton', className)} />;
+  return <div className={clsx('skeleton', className)} aria-hidden="true" />;
 }
 
 export function CardSkeleton() {

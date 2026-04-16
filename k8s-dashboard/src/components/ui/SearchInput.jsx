@@ -9,7 +9,9 @@ export default function SearchInput({ value, onChange, placeholder = 'Search…'
         type="text"
         value={value}
         onChange={e => onChange(e.target.value)}
+        onKeyDown={e => e.key === 'Escape' && onChange('')}
         placeholder={placeholder}
+        aria-label={placeholder}
         className="input pl-9 pr-8 w-full"
       />
       {value && (

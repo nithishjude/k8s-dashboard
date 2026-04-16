@@ -35,11 +35,11 @@ export default function Navbar({ onRefresh, refreshing, autoRefresh, refreshKey,
   };
 
   return (
-    <header className="h-14 bg-surface-850 border-b border-surface-700 flex items-center px-4 gap-3 flex-shrink-0 relative z-30">
+    <header className="h-14 bg-surface-850/80 border-b border-surface-700/70 backdrop-blur-md flex items-center px-4 gap-3 flex-shrink-0 relative z-30">
       {/* Cluster badge */}
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-700 rounded-xl border border-surface-600 text-xs mr-2">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-700/70 rounded-full border border-surface-600/70 text-xs mr-2">
         <Circle size={7} className="text-status-running fill-status-running" />
-        <span className="text-slate-300 font-medium">{clusterName}</span>
+        <span className="text-slate-200 font-semibold">{clusterName}</span>
         <ChevronDown size={12} className="text-slate-500" />
       </div>
 
@@ -76,6 +76,7 @@ export default function Navbar({ onRefresh, refreshing, autoRefresh, refreshKey,
             : 'bg-surface-700 border-surface-600 text-slate-400 hover:text-slate-200',
         )}
         title="Toggle auto-refresh (10s)"
+        aria-label="Toggle auto-refresh"
       >
         <span className={clsx('w-1.5 h-1.5 rounded-full', autoRefresh ? 'bg-brand-400 animate-pulse' : 'bg-slate-500')} />
         Auto Refresh
@@ -85,8 +86,9 @@ export default function Navbar({ onRefresh, refreshing, autoRefresh, refreshKey,
       <button
         onClick={onRefresh}
         disabled={refreshing}
-        className="p-2 rounded-xl hover:bg-surface-700 text-slate-400 hover:text-slate-200 transition-all duration-200 disabled:opacity-50"
+        className="p-2 rounded-xl hover:bg-surface-700/70 text-slate-400 hover:text-slate-200 transition-all duration-200 disabled:opacity-50"
         title="Refresh now"
+        aria-label="Refresh now"
       >
         <RefreshCw size={16} className={clsx(refreshing && 'animate-spin')} />
       </button>
@@ -95,7 +97,8 @@ export default function Navbar({ onRefresh, refreshing, autoRefresh, refreshKey,
       <div className="relative">
         <button
           onClick={() => { setShowAlerts(s => !s); setShowProfile(false); }}
-          className="p-2 rounded-xl hover:bg-surface-700 text-slate-400 hover:text-slate-200 transition-all duration-200 relative"
+          className="p-2 rounded-xl hover:bg-surface-700/70 text-slate-400 hover:text-slate-200 transition-all duration-200 relative"
+          aria-label="Toggle alerts"
         >
           <Bell size={16} />
           {criticalAlerts.length > 0 && (
@@ -135,9 +138,10 @@ export default function Navbar({ onRefresh, refreshing, autoRefresh, refreshKey,
       <div className="relative">
         <button
           onClick={() => { setShowProfile(s => !s); setShowAlerts(false); }}
-          className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-surface-700 transition-all duration-200"
+          className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-surface-700/70 transition-all duration-200"
+          aria-label="Open profile menu"
         >
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center shadow-glow">
             <User size={13} className="text-white" />
           </div>
           <span className="text-xs text-slate-300 font-medium hidden sm:inline">admin</span>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,11 +7,32 @@
 @layer base {
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+  :root {
+    --brand-50:  236 255 248;
+    --brand-100: 204 255 240;
+    --brand-200: 153 255 223;
+    --brand-300: 102 255 207;
+    --brand-400: 51 248 185;
+    --brand-500: 0 245 160;
+    --brand-600: 0 214 140;
+    --brand-700: 0 174 115;
+    --brand-800: 0 134 90;
+    --brand-900: 0 94 65;
+
+    --surface-900: 10 10 10;
+    --surface-850: 18 18 18;
+    --surface-800: 26 26 26;
+    --surface-700: 32 32 32;
+    --surface-600: 40 40 40;
+    --surface-500: 58 58 58;
+    --surface-400: 88 88 88;
+    --surface-300: 120 120 120;
+  }
   body {
     @apply bg-surface-900 text-slate-100 font-sans antialiased;
-    background-image: radial-gradient(at 40% 20%, hsla(228,100%,8%,1) 0px, transparent 50%),
-                      radial-gradient(at 80% 0%,  hsla(263,70%,6%,1)  0px, transparent 50%),
-                      radial-gradient(at 0%  50%, hsla(215,80%,6%,1)  0px, transparent 50%);
+    background-image: radial-gradient(900px 520px at 10% -10%, rgba(0,245,160,0.12), transparent 60%),
+                      radial-gradient(700px 480px at 95% 5%, rgba(124,58,237,0.10), transparent 65%),
+                      radial-gradient(800px 520px at 40% 120%, rgba(34,211,238,0.08), transparent 70%);
     min-height: 100vh;
   }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -22,45 +43,63 @@
 
 @layer components {
   .card {
-    @apply bg-surface-800 border border-surface-600 rounded-2xl shadow-card backdrop-blur-sm;
+      @apply bg-surface-800/80 border border-surface-600/70 rounded-2xl shadow-card backdrop-blur-md;
+      background-image: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
   }
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-card-hover hover:border-surface-400 hover:-translate-y-0.5;
+      @apply transition-all duration-300 hover:shadow-card-hover hover:border-surface-400/70 hover:-translate-y-0.5;
   }
   .btn-primary {
-    @apply px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-medium text-sm
-           transition-all duration-200 shadow-glow hover:shadow-glow active:scale-95;
+      @apply px-4 py-2 text-white rounded-xl font-semibold text-sm transition-all duration-200
+        shadow-glow hover:shadow-glow active:scale-95;
+    background-image: linear-gradient(135deg, #00F5A0, #7C3AED);
   }
   .btn-secondary {
-    @apply px-4 py-2 bg-surface-700 hover:bg-surface-600 text-slate-200 rounded-xl font-medium text-sm
-           border border-surface-500 hover:border-surface-400 transition-all duration-200 active:scale-95;
+      @apply px-4 py-2 bg-surface-700/80 hover:bg-surface-600 text-slate-200 rounded-xl font-medium text-sm
+        border border-surface-500/70 hover:border-surface-400 transition-all duration-200 active:scale-95;
   }
   .btn-danger {
-    @apply px-4 py-2 bg-red-600/80 hover:bg-red-500 text-white rounded-xl font-medium text-sm
+      @apply px-4 py-2 bg-red-600/90 hover:bg-red-500 text-white rounded-xl font-medium text-sm
            transition-all duration-200 active:scale-95;
   }
   .input {
-    @apply bg-surface-700 border border-surface-500 text-slate-100 rounded-xl px-3 py-2 text-sm
-           placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50
+      @apply bg-surface-700/80 border border-surface-500/70 text-slate-100 rounded-xl px-3 py-2 text-sm
+        placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30
            transition-all duration-200;
   }
   .table-row-hover {
     @apply hover:bg-surface-700/60 transition-colors duration-150 cursor-pointer;
   }
+  .table-toolbar-btn {
+    @apply px-2.5 py-1.5 text-xs rounded-lg border border-surface-600 text-slate-400
+           hover:text-slate-200 hover:bg-surface-700 transition-all duration-200;
+  }
+  .table-toolbar-btn.active {
+    @apply bg-brand-600/20 border-brand-600/40 text-brand-300 shadow-glow;
+  }
+  .table-density-compact td {
+    @apply py-2 px-3 text-xs;
+  }
+  .table-density-compact th {
+    @apply py-2 px-3 text-[10px];
+  }
+  .table-sticky-head th {
+    @apply sticky top-0 z-10 bg-surface-800/95 backdrop-blur border-b border-surface-600;
+  }
   .nav-item {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-           text-slate-400 hover:text-slate-100 hover:bg-surface-700
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold
+           text-slate-400 hover:text-slate-100 hover:bg-surface-700/70
            transition-all duration-200;
   }
   .nav-item.active {
-    @apply bg-brand-600/20 text-brand-400 border border-brand-600/30;
+    @apply bg-brand-600/15 text-brand-300 border border-brand-600/40 shadow-glow;
   }
   .skeleton {
     @apply bg-gradient-to-r from-surface-700 via-surface-600 to-surface-700
            bg-[length:200%_100%] animate-shimmer rounded-lg;
   }
   .gradient-text {
-    @apply bg-gradient-to-r from-brand-400 to-purple-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-brand-400 to-violet-400 bg-clip-text text-transparent;
   }
   .status-dot {
     @apply w-2 h-2 rounded-full inline-block;

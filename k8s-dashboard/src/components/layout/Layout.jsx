@@ -21,6 +21,12 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-3 focus:left-3 focus:bg-surface-800 focus:text-slate-100 focus:px-3 focus:py-2 focus:rounded-lg"
+      >
+        Skip to content
+      </a>
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(c => !c)}
@@ -35,7 +41,7 @@ export default function Layout() {
           onToggleAutoRefresh={() => setAutoRefresh(r => !r)}
         />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main id="main-content" className="flex-1 overflow-y-auto overflow-x-hidden">
           {healthError && (
             <div className="mx-6 mt-4 card p-3 border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs">
               Backend disconnected. Check the API server or update `VITE_API_URL` if running backend in WSL.

@@ -14,7 +14,15 @@ export default function MetricCard({ icon: Icon, label, value, sub, trend, trend
   const c = colorMap[color] || colorMap.brand;
 
   return (
-    <div className="card card-hover p-5 flex flex-col gap-3">
+    <div className="card card-hover p-5 flex flex-col gap-3 relative overflow-hidden">
+      <div className={clsx(
+        'absolute inset-x-0 top-0 h-0.5',
+        color === 'green' ? 'bg-emerald-400/70' :
+        color === 'yellow' ? 'bg-amber-400/70' :
+        color === 'red' ? 'bg-red-400/70' :
+        color === 'cyan' ? 'bg-cyan-400/70' :
+        color === 'purple' ? 'bg-purple-400/70' : 'bg-brand-400/70',
+      )} />
       <div className="flex items-start justify-between">
         <div className={clsx('p-2.5 rounded-xl ring-1', c.icon, c.ring)}>
           {loading ? <Skeleton className="w-5 h-5 rounded" /> : <Icon size={20} />}

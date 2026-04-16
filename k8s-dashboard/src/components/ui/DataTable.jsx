@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Columns3, LayoutList, LayoutGrid, SlidersHorizontal } from 'lucide-react';
 import clsx from 'clsx';
 import { TableSkeleton } from './Skeleton';
 
@@ -13,6 +13,8 @@ export default function DataTable({
   onRowClick,
   emptyMessage = 'No resources found',
   skeletonRows = 8,
+  density: densityProp,
+  onDensityChange,
   manualPagination = false,
   page,
   pageSize,
@@ -24,18 +26,39 @@ export default function DataTable({
   const [sortDir,  setSortDir]  = useState('asc');
   const [pageState,     setPageState]     = useState(1);
   const [pageSizeState, setPageSizeState] = useState(10);
+  const [densityState, setDensityState] = useState('comfortable');
+  const [showColumns, setShowColumns] = useState(false);
+  const [hiddenKeys, setHiddenKeys] = useState(() => columns.filter(c => c.hidden).map(c => c.key));
+  const popoverRef = useRef(null);
+  const density = densityProp || densityState;
 
-  const currentPage = manualPagination ? page : pageState;
-  const currentPageSize = manualPagination ? pageSize : pageSizeState;
+  const currentPage = manualPagination ? (page || 1) : pageState;
+  const currentPageSize = manualPagination ? (pageSize || 10) : pageSizeState;
   const totalItems = manualPagination ? (total ?? data.length) : data.length;
+
+  useEffect(() => {
+    const keys = new Set(columns.map(c => c.key));
+    setHiddenKeys(prev => prev.filter(k => keys.has(k)));
+  }, [columns]);
+
+  useEffect(() => {
+    if (!showColumns) return undefined;
+    const onDocClick = (e) => {
+      if (!popoverRef.current?.contains(e.target)) setShowColumns(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [showColumns]);
 
   // ── Sorting ──────────────────────────────────────────────────────────────
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
     else { setSortKey(key); setSortDir('asc'); }
-    setPage(1);
+    if (manualPagination) onPageChange?.(1);
+    else setPageState(1);
   };
 
+  const visibleColumns = useMemo(() => columns.filter(col => !hiddenKeys.includes(col.key)), [columns, hiddenKeys]);
   const sorted = useMemo(() => {
     if (!sortKey) return data;
     return [...data].sort((a, b) => {
@@ -61,11 +84,25 @@ export default function DataTable({
       : <ChevronDown size={12} className="text-brand-400" />;
   };
 
+  const toggleColumn = (key) => {
+    setHiddenKeys(prev => {
+      const isHidden = prev.includes(key);
+      const visibleCount = columns.length - prev.length;
+      if (!isHidden && visibleCount <= 1) return prev;
+      return isHidden ? prev.filter(k => k !== key) : [...prev, key];
+    });
+  };
+
+  const applyDensity = (value) => {
+    if (onDensityChange) onDensityChange(value);
+    else setDensityState(value);
+  };
+
   return (
     <div className="card overflow-hidden">
       {loading ? (
         <div className="p-5">
-          <TableSkeleton rows={skeletonRows} cols={columns.length} />
+          <TableSkeleton rows={skeletonRows} cols={visibleColumns.length || columns.length} />
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-500">
@@ -79,12 +116,64 @@ export default function DataTable({
         </div>
       ) : (
         <>
+          {/* Toolbar */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-surface-600 flex-wrap gap-3">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <SlidersHorizontal size={14} className="text-slate-500" />
+              <span>{totalItems} items</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-surface-700 rounded-lg p-0.5 border border-surface-600">
+                <button
+                  onClick={() => applyDensity('compact')}
+                  className={clsx('table-toolbar-btn', density === 'compact' && 'active')}
+                  title="Compact density"
+                >
+                  <LayoutList size={14} />
+                </button>
+                <button
+                  onClick={() => applyDensity('comfortable')}
+                  className={clsx('table-toolbar-btn', density === 'comfortable' && 'active')}
+                  title="Comfortable density"
+                >
+                  <LayoutGrid size={14} />
+                </button>
+              </div>
+
+              <div className="relative" ref={popoverRef}>
+                <button
+                  onClick={() => setShowColumns(s => !s)}
+                  className="table-toolbar-btn"
+                  title="Columns"
+                >
+                  <Columns3 size={14} className="mr-1" /> Columns
+                </button>
+                {showColumns && (
+                  <div className="absolute right-0 mt-2 w-56 card p-2 z-20">
+                    <p className="text-[10px] uppercase tracking-wide text-slate-500 px-2 py-1">Visible Columns</p>
+                    {columns.map(col => (
+                      <label key={col.key} className="flex items-center gap-2 px-2 py-1.5 text-xs text-slate-300 hover:bg-surface-700/60 rounded-lg">
+                        <input
+                          type="checkbox"
+                          checked={!hiddenKeys.includes(col.key)}
+                          onChange={() => toggleColumn(col.key)}
+                          disabled={col.hideable === false}
+                        />
+                        <span className={col.hideable === false ? 'text-slate-500' : ''}>{col.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Table */}
           <div className="overflow-x-auto scrollbar-thin">
-            <table className="w-full min-w-max">
-              <thead>
-                <tr className="border-b border-surface-600">
-                  {columns.map(col => (
+            <table className={clsx('w-full min-w-max', density === 'compact' && 'table-density-compact')}>
+              <thead className="table-sticky-head">
+                <tr>
+                  {visibleColumns.map(col => (
                     <th
                       key={col.key}
                       className={clsx(
@@ -109,7 +198,7 @@ export default function DataTable({
                     className={clsx('table-row-hover animate-fade-in', onRowClick && 'cursor-pointer')}
                     onClick={() => onRowClick?.(row)}
                   >
-                    {columns.map(col => (
+                    {visibleColumns.map(col => (
                       <td key={col.key} className="px-4 py-3 text-sm text-slate-300 whitespace-nowrap">
                         {col.render ? col.render(row[col.key], row) : row[col.key] ?? '—'}
                       </td>
@@ -146,6 +235,21 @@ export default function DataTable({
             </div>
 
             <div className="flex items-center gap-1">
+              <div className="hidden sm:flex items-center gap-1 text-xs text-slate-500">
+                <span>Page</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  value={currentPage}
+                  onChange={e => {
+                    const next = Math.min(totalPages, Math.max(1, Number(e.target.value)));
+                    manualPagination ? onPageChange?.(next) : setPageState(next);
+                  }}
+                  className="input py-1 px-2 text-xs w-16"
+                />
+                <span>of {totalPages}</span>
+              </div>
               <button
                 onClick={() => manualPagination
                   ? onPageChange?.(Math.max(1, currentPage - 1))

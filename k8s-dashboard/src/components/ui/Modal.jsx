@@ -1,15 +1,18 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useId } from 'react';
 import { X } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Modal({ isOpen, onClose, title, children, size = 'md', footer }) {
   const overlayRef = useRef(null);
+  const dialogRef = useRef(null);
+  const titleId = useId();
 
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
@@ -33,13 +36,20 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
       style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
       onClick={e => e.target === overlayRef.current && onClose()}
     >
-      <div className={clsx(
-        'card w-full flex flex-col animate-slide-up max-h-[90vh]',
-        sizeClass,
-      )}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className={clsx(
+          'card w-full flex flex-col animate-slide-up max-h-[90vh] focus:outline-none',
+          sizeClass,
+        )}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-600 flex-shrink-0">
-          <h2 className="text-base font-semibold text-slate-100">{title}</h2>
+          <h2 id={titleId} className="text-base font-semibold text-slate-100">{title}</h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-surface-600 text-slate-400 hover:text-slate-200 transition-colors"

@@ -31,7 +31,8 @@ const STATUS_MAP = {
 };
 
 export default function StatusBadge({ status, size = 'sm', showDot = true, className }) {
-  const cfg = STATUS_MAP[status] || STATUS_MAP.Unknown;
+  const safeStatus = status || 'Unknown';
+  const cfg = STATUS_MAP[safeStatus] || STATUS_MAP.Unknown;
   return (
     <span className={clsx(
       'badge font-semibold',
@@ -46,7 +47,7 @@ export default function StatusBadge({ status, size = 'sm', showDot = true, class
           cfg.pulse && 'animate-pulse-slow',
         )} />
       )}
-      {status}
+      {safeStatus}
     </span>
   );
 }
