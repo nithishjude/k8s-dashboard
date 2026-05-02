@@ -10,6 +10,7 @@ export default function Layout() {
   const [refreshing,       setRefreshing]         = useState(false);
   const [autoRefresh,      setAutoRefresh]        = useState(false);
   const [refreshKey,       setRefreshKey]         = useState(0);
+  const [mobileNavOpen,    setMobileNavOpen]      = useState(false);
 
   const { error: healthError } = useK8sData(fetchHealth, [refreshKey], { autoRefresh, refreshInterval: 10_000 });
 
@@ -18,7 +19,6 @@ export default function Layout() {
     setRefreshKey(k => k + 1);
     setTimeout(() => setRefreshing(false), 1200);
   }, []);
-
   return (
     <div className="flex h-screen overflow-hidden">
       <a
@@ -27,20 +27,28 @@ export default function Layout() {
       >
         Skip to content
       </a>
+      {mobileNavOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
       <Sidebar
         collapsed={sidebarCollapsed}
+        mobileOpen={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
         onToggle={() => setSidebarCollapsed(c => !c)}
       />
-
       <div className="flex flex-col flex-1 min-w-0">
         <Navbar
           onRefresh={handleRefresh}
           refreshing={refreshing}
           autoRefresh={autoRefresh}
           refreshKey={refreshKey}
+          onToggleSidebar={() => setMobileNavOpen(o => !o)}
           onToggleAutoRefresh={() => setAutoRefresh(r => !r)}
         />
-
         <main id="main-content" className="flex-1 overflow-y-auto overflow-x-hidden">
           {healthError && (
             <div className="mx-6 mt-4 card p-3 border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs">

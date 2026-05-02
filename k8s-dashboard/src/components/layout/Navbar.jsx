@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { RefreshCw, Bell, User, ChevronDown, Circle, Wifi, WifiOff } from 'lucide-react';
+import { Menu, RefreshCw, Bell, User, ChevronDown, Circle, Wifi, WifiOff } from 'lucide-react';
 import clsx from 'clsx';
 import { fetchAlerts, fetchHealth } from '../../api/k8sApi';
 import { useK8sData } from '../../hooks/useK8sData';
 import Modal from '../ui/Modal';
 
-export default function Navbar({ onRefresh, refreshing, autoRefresh, refreshKey, onToggleAutoRefresh }) {
+export default function Navbar({ onRefresh, refreshing, autoRefresh, refreshKey, onToggleAutoRefresh, onToggleSidebar }) {
   const [showAlerts,  setShowAlerts]  = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showToken, setShowToken] = useState(false);
@@ -36,6 +36,13 @@ export default function Navbar({ onRefresh, refreshing, autoRefresh, refreshKey,
 
   return (
     <header className="h-14 bg-surface-850/80 border-b border-surface-700/70 backdrop-blur-md flex items-center px-4 gap-3 flex-shrink-0 relative z-30">
+      <button
+        onClick={onToggleSidebar}
+        className="md:hidden p-2 rounded-xl hover:bg-surface-700/70 text-slate-400 hover:text-slate-200 transition-all duration-200"
+        aria-label="Toggle navigation"
+      >
+        <Menu size={16} />
+      </button>
       {/* Cluster badge */}
       <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-700/70 rounded-full border border-surface-600/70 text-xs mr-2">
         <Circle size={7} className="text-status-running fill-status-running" />

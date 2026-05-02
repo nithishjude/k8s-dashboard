@@ -107,6 +107,10 @@
   .badge {
     @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold;
   }
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold
+           bg-surface-700/80 border border-surface-600/70 text-slate-300;
+  }
   .glass {
     @apply bg-white/5 backdrop-blur-md border border-white/10;
   }

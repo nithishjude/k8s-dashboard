@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Vite dev server (k8s-dashboard)",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"k8s-dashboard",
+				"run",
+				"dev"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

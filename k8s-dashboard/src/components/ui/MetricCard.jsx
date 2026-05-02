@@ -47,7 +47,7 @@ export default function MetricCard({ icon: Icon, label, value, sub, trend, trend
         <>
           <div>
             <p className="text-2xl font-bold text-slate-100 tracking-tight">{value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{label}</p>
+            <p className="text-[11px] uppercase tracking-wide text-slate-500 mt-0.5">{label}</p>
           </div>
           {sub && <p className="text-xs text-slate-400 border-t border-surface-600 pt-2.5">{sub}</p>}
         </>

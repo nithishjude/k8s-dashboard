@@ -10,39 +10,40 @@ const NAV_SECTIONS = [
   {
     title: 'Overview',
     items: [
-      { path: '/',            icon: LayoutDashboard, label: 'Dashboard'   },
-      { path: '/namespaces',  icon: Layers,          label: 'Namespaces'  },
+      { path: '/app',            icon: LayoutDashboard, label: 'Dashboard'   },
+      { path: '/app/namespaces',  icon: Layers,          label: 'Namespaces'  },
     ],
   },
   {
     title: 'Workloads',
     items: [
-      { path: '/nodes',       icon: Server,          label: 'Nodes'       },
-      { path: '/pods',        icon: Box,             label: 'Pods'        },
-      { path: '/deployments', icon: Rocket,          label: 'Deployments' },
+      { path: '/app/nodes',       icon: Server,          label: 'Nodes'       },
+      { path: '/app/pods',        icon: Box,             label: 'Pods'        },
+      { path: '/app/deployments', icon: Rocket,          label: 'Deployments' },
     ],
   },
   {
     title: 'Observability',
     items: [
-      { path: '/metrics',     icon: Activity,        label: 'Metrics'     },
-      { path: '/networking',  icon: Network,         label: 'Networking'  },
+      { path: '/app/metrics',     icon: Activity,        label: 'Metrics'     },
+      { path: '/app/networking',  icon: Network,         label: 'Networking'  },
     ],
   },
   {
     title: 'Security',
     items: [
-      { path: '/rbac',        icon: Shield,          label: 'RBAC'        },
-      { path: '/audit',       icon: Settings,        label: 'Audit Logs'  },
+      { path: '/app/rbac',        icon: Shield,          label: 'RBAC'        },
+      { path: '/app/audit',       icon: Settings,        label: 'Audit Logs'  },
     ],
   },
 ];
 
-export default function Sidebar({ collapsed, onToggle }) {
+export default function Sidebar({ collapsed, onToggle, mobileOpen, onClose }) {
   return (
     <aside className={clsx(
-      'flex flex-col h-full bg-surface-850/85 border-r border-surface-700/70 backdrop-blur-md transition-all duration-300 flex-shrink-0',
+      'fixed md:static inset-y-0 left-0 z-40 flex flex-col h-full bg-surface-850/85 border-r border-surface-700/70 backdrop-blur-md transition-all duration-300 flex-shrink-0',
       collapsed ? 'w-[60px]' : 'w-[220px]',
+      mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
     )}>
       {/* Logo */}
       <div className={clsx(
@@ -57,6 +58,15 @@ export default function Sidebar({ collapsed, onToggle }) {
             <p className="text-sm font-bold gradient-text leading-none">K8s Dash</p>
             <p className="text-[10px] text-slate-500 mt-0.5">Cluster Studio</p>
           </div>
+        )}
+        {!collapsed && (
+          <button
+            onClick={onClose}
+            className="ml-auto md:hidden p-1.5 rounded-lg hover:bg-surface-700/70 text-slate-400 hover:text-slate-200 transition-all duration-200"
+            aria-label="Close navigation"
+          >
+            <ChevronLeft size={16} />
+          </button>
         )}
       </div>
 
@@ -80,6 +90,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                   isActive && 'active',
                 )}
                 title={collapsed ? item.label : undefined}
+                onClick={onClose}
               >
                 <item.icon size={17} className="flex-shrink-0" />
                 {!collapsed && <span className="animate-fade-in truncate">{item.label}</span>}

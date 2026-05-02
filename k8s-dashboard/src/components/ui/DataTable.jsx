@@ -199,7 +199,14 @@ export default function DataTable({
                     onClick={() => onRowClick?.(row)}
                   >
                     {visibleColumns.map(col => (
-                      <td key={col.key} className="px-4 py-3 text-sm text-slate-300 whitespace-nowrap">
+                      <td
+                        key={col.key}
+                        className={clsx(
+                          'px-4 py-3 text-sm text-slate-300 whitespace-nowrap',
+                          col.align === 'right' && 'text-right tabular-nums',
+                          col.align === 'center' && 'text-center',
+                        )}
+                      >
                         {col.render ? col.render(row[col.key], row) : row[col.key] ?? '—'}
                       </td>
                     ))}
