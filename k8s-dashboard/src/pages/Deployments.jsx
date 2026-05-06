@@ -1,12 +1,12 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Rocket, RefreshCw, Trash2, RotateCcw, Minus, Plus } from 'lucide-react';
+import { Rocket, RefreshCw, Trash2, RotateCcw, Minus, Plus, SquarePlus } from 'lucide-react';
 import DataTable from '../components/ui/DataTable';
 import StatusBadge from '../components/ui/StatusBadge';
 import SearchInput from '../components/ui/SearchInput';
 import Modal from '../components/ui/Modal';
 import { useK8sData } from '../hooks/useK8sData';
-import { fetchDeployments, scaleDeployment, deleteDeployment, restartDeployment, fetchNamespaces } from '../api/k8sApi';
+import { fetchDeployments, scaleDeployment, deleteDeployment, restartDeployment, fetchNamespaces, createDeployment } from '../api/k8sApi';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import clsx from 'clsx';
 
@@ -33,6 +33,16 @@ export default function Deployments() {
   const [scaleReplicas, setScaleReplicas] = useState(1);
   const [deleteTarget, setDeleteTarget]   = useState(null);
   const [actionMsg,    setActionMsg]      = useState('');
+  const [createOpen,   setCreateOpen]     = useState(false);
+  const [createForm,   setCreateForm]     = useState({
+    name: '',
+    namespace: 'default',
+    image: '',
+    containerName: '',
+    replicas: 1,
+    port: '',
+  });
+  const [createMsg,    setCreateMsg]      = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
@@ -60,6 +70,33 @@ export default function Deployments() {
 
   const filtered = useMemo(() => deployments, [deployments]);
 
+  const openCreate = () => {
+    setCreateMsg('');
+    setCreateForm({
+      name: '',
+      namespace: nsFilter === 'All' ? (namespaces?.[0]?.name || 'default') : nsFilter,
+      image: '',
+      containerName: '',
+      replicas: 1,
+      port: '',
+    });
+    setCreateOpen(true);
+  };
+
+  const handleCreate = async () => {
+    setCreateMsg('Creating deployment…');
+    try {
+      await createDeployment(createForm);
+      setCreateMsg('✓ Deployment created');
+      setTimeout(() => {
+        setCreateOpen(false);
+        refresh();
+      }, 1000);
+    } catch (err) {
+      setCreateMsg(`✗ ${err.message || 'Create failed'}`);
+    }
+  };
+
   const openScale = (dep, e) => {
     e?.stopPropagation();
     setScaleTarget(dep);
@@ -84,8 +121,12 @@ export default function Deployments() {
 
   const handleRestart = async (dep, e) => {
     e?.stopPropagation();
-    await restartDeployment(dep.namespace, dep.name);
-    refresh();
+    try {
+      await restartDeployment(dep.namespace, dep.name);
+      refresh();
+    } catch (err) {
+      console.error('Restart failed', err);
+    }
   };
 
   const COLUMNS = [
@@ -128,9 +169,14 @@ export default function Deployments() {
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">{totalDeployments || '—'} deployments across all namespaces</p>
         </div>
-        <button onClick={refresh} className="btn-secondary flex items-center gap-2">
-          <RefreshCw size={14} /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={openCreate} className="btn-primary flex items-center gap-2">
+            <SquarePlus size={14} /> New Deployment
+          </button>
+          <button onClick={refresh} className="btn-secondary flex items-center gap-2">
+            <RefreshCw size={14} /> Refresh
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -166,6 +212,84 @@ export default function Deployments() {
       <div className="flex justify-between text-xs text-slate-500">
         <span>Last updated: {lastFetch ? lastFetch.toLocaleTimeString() : '—'}</span>
       </div>
+
+      {/* Create deployment */}
+      <Modal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Create Deployment"
+        size="lg"
+        footer={
+          <>
+            <button onClick={() => setCreateOpen(false)} className="btn-secondary text-xs">Cancel</button>
+            <button onClick={handleCreate} className="btn-primary text-xs">Create</button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="space-y-1.5">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Deployment Name</span>
+              <input
+                value={createForm.name}
+                onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
+                className="input w-full"
+                placeholder="web-app"
+              />
+            </label>
+            <label className="space-y-1.5">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Namespace</span>
+              <select
+                value={createForm.namespace}
+                onChange={e => setCreateForm(f => ({ ...f, namespace: e.target.value }))}
+                className="input w-full"
+              >
+                {nsOptions.filter(n => n !== 'All').map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+            <label className="space-y-1.5 md:col-span-2">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Image Name</span>
+              <input
+                value={createForm.image}
+                onChange={e => setCreateForm(f => ({ ...f, image: e.target.value }))}
+                className="input w-full font-mono"
+                placeholder="nginx:1.27"
+              />
+            </label>
+            <label className="space-y-1.5">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Container Name</span>
+              <input
+                value={createForm.containerName}
+                onChange={e => setCreateForm(f => ({ ...f, containerName: e.target.value }))}
+                className="input w-full"
+                placeholder="web"
+              />
+            </label>
+            <label className="space-y-1.5">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Replicas</span>
+              <input
+                type="number"
+                min="0"
+                value={createForm.replicas}
+                onChange={e => setCreateForm(f => ({ ...f, replicas: e.target.value }))}
+                className="input w-full"
+              />
+            </label>
+            <label className="space-y-1.5">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Port</span>
+              <input
+                type="number"
+                min="1"
+                value={createForm.port}
+                onChange={e => setCreateForm(f => ({ ...f, port: e.target.value }))}
+                className="input w-full"
+                placeholder="80"
+              />
+            </label>
+          </div>
+          {createMsg && <p className={clsx('text-sm', createMsg.startsWith('✓') ? 'text-emerald-400' : createMsg === 'Creating deployment…' ? 'text-brand-400' : 'text-red-400')}>{createMsg}</p>}
+        </div>
+      </Modal>
 
       <DataTable
         columns={COLUMNS}

@@ -6,10 +6,15 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
   const overlayRef = useRef(null);
   const dialogRef = useRef(null);
   const titleId = useId();
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e) => e.key === 'Escape' && onClose();
+    const onKey = (e) => e.key === 'Escape' && onCloseRef.current?.();
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
     dialogRef.current?.focus();
@@ -17,7 +22,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

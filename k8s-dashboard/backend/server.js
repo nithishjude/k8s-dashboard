@@ -402,6 +402,16 @@ app.get('/api/pods', requireAuth, safe(async (req, res) => {
         image:    c.image,
         ready:    p.status?.containerStatuses?.find(cs => cs.name === c.name)?.ready || false,
         restarts: p.status?.containerStatuses?.find(cs => cs.name === c.name)?.restartCount || 0,
+        volumeMounts: (c.volumeMounts || []).map(vm => ({
+          name: vm.name,
+          mountPath: vm.mountPath,
+          readOnly: vm.readOnly || false,
+        })),
+      })),
+      volumes: (p.spec?.volumes || []).map(v => ({
+        name: v.name,
+        type: Object.keys(v).find(key => key !== 'name') || 'unknown',
+        source: Object.entries(v).find(([key]) => key !== 'name')?.[0] || 'unknown',
       })),
       conditions: (p.status?.conditions || []).map(c => ({ type: c.type, status: c.status })),
       labels:     p.metadata?.labels  || {},
@@ -427,6 +437,7 @@ app.get('/api/pods', requireAuth, safe(async (req, res) => {
 app.get('/api/pods/:ns/:name/logs', requireAuth, safe(async (req, res) => {
   const { ns, name } = req.params;
   const lines        = parseInt(req.query.lines || '200', 10);
+  const raw          = req.query.raw === 'true' || req.query.raw === '1';
   const { body }     = await coreV1.readNamespacedPodLog(
     name, ns,
     undefined,          // container (auto-select first)
@@ -439,6 +450,10 @@ app.get('/api/pods/:ns/:name/logs', requireAuth, safe(async (req, res) => {
     lines,              // tailLines
     false,              // timestamps
   );
+  if (raw) {
+    res.type('text/plain').send(body || '(no logs)');
+    return;
+  }
   res.json(body || '(no logs)');
 }));
 
@@ -494,6 +509,76 @@ app.get('/api/deployments', requireAuth, safe(async (req, res) => {
   res.json({ items, total, page, pageSize });
 }));
 
+// ── POST /api/deployments ─────────────────────────────────────────────────────
+app.post('/api/deployments', requireAuth, safe(async (req, res) => {
+  const {
+    name,
+    namespace,
+    image,
+    containerName,
+    replicas,
+    port,
+  } = req.body || {};
+
+  if (!name || !namespace || !image) {
+    return res.status(400).json({ error: 'name, namespace, and image are required' });
+  }
+
+  const parsedReplicas = Number.parseInt(replicas ?? '1', 10);
+  if (Number.isNaN(parsedReplicas) || parsedReplicas < 0) {
+    return res.status(400).json({ error: 'replicas must be a non-negative number' });
+  }
+
+  const parsedPort = port === '' || port == null ? undefined : Number.parseInt(port, 10);
+  if (parsedPort !== undefined && (Number.isNaN(parsedPort) || parsedPort <= 0)) {
+    return res.status(400).json({ error: 'port must be a positive number' });
+  }
+
+  const deploymentName = name.trim();
+  const targetNamespace = namespace.trim();
+  const imageName = image.trim();
+  const podContainerName = (containerName || deploymentName).trim();
+
+  const manifest = {
+    apiVersion: 'apps/v1',
+    kind: 'Deployment',
+    metadata: {
+      name: deploymentName,
+      namespace: targetNamespace,
+      labels: {
+        app: deploymentName,
+      },
+    },
+    spec: {
+      replicas: parsedReplicas,
+      selector: {
+        matchLabels: {
+          app: deploymentName,
+        },
+      },
+      template: {
+        metadata: {
+          labels: {
+            app: deploymentName,
+          },
+        },
+        spec: {
+          containers: [
+            {
+              name: podContainerName,
+              image: imageName,
+              ...(parsedPort ? { ports: [{ containerPort: parsedPort }] } : {}),
+            },
+          ],
+        },
+      },
+    },
+  };
+
+  await appsV1.createNamespacedDeployment(targetNamespace, manifest);
+  res.status(201).json({ success: true, deployment: { name: deploymentName, namespace: targetNamespace } });
+}));
+
 // ── PATCH /api/deployments/:ns/:name/scale ────────────────────────────────────
 app.patch('/api/deployments/:ns/:name/scale', requireAuth, safe(async (req, res) => {
   const { ns, name } = req.params;
@@ -512,12 +597,15 @@ app.patch('/api/deployments/:ns/:name/scale', requireAuth, safe(async (req, res)
 // ── POST /api/deployments/:ns/:name/restart ───────────────────────────────────
 app.post('/api/deployments/:ns/:name/restart', requireAuth, safe(async (req, res) => {
   const { ns, name } = req.params;
-  await appsV1.patchNamespacedDeployment(
-    name, ns,
-    { spec: { template: { metadata: { annotations: { 'kubectl.kubernetes.io/restartedAt': new Date().toISOString() } } } } },
-    undefined, undefined, undefined, undefined,
-    { headers: { 'Content-Type': 'application/merge-patch+json' } },
-  );
+  const { body: deployment } = await appsV1.readNamespacedDeployment(name, ns);
+  deployment.spec ||= {};
+  deployment.spec.template ||= {};
+  deployment.spec.template.metadata ||= {};
+  deployment.spec.template.metadata.annotations = {
+    ...(deployment.spec.template.metadata.annotations || {}),
+    'kubectl.kubernetes.io/restartedAt': new Date().toISOString(),
+  };
+  await appsV1.replaceNamespacedDeployment(name, ns, deployment);
   res.json({ success: true });
 }));
 

@@ -48,7 +48,13 @@ export const fetchPods   = ({ namespace, status, search, page, pageSize } = {}) 
 });
 export const fetchPod    = (ns, name) => api.get(`/pods/${ns}/${name}`);
 export const deletePod   = (ns, name) => api.delete(`/pods/${ns}/${name}`);
-export const fetchPodLogs= (ns, name) => api.get(`/pods/${ns}/${name}/logs`);
+export const fetchPodLogs = (ns, name, { raw = false, lines = 200 } = {}) => api.get(`/pods/${ns}/${name}/logs`, {
+  params: {
+    raw,
+    lines,
+  },
+  responseType: raw ? 'text' : 'json',
+});
 
 // ── Deployments ─────────────────────────────────────────────────────────────
 export const fetchDeployments    = ({ namespace, status, search, page, pageSize } = {}) => api.get('/deployments', {
@@ -60,6 +66,7 @@ export const fetchDeployments    = ({ namespace, status, search, page, pageSize 
     pageSize,
   },
 });
+export const createDeployment    = (payload) => api.post('/deployments', payload);
 export const fetchDeployment     = (ns, name)   => api.get(`/deployments/${ns}/${name}`);
 export const scaleDeployment     = (ns, name, replicas) => api.patch(`/deployments/${ns}/${name}/scale`, { replicas });
 export const deleteDeployment    = (ns, name)   => api.delete(`/deployments/${ns}/${name}`);

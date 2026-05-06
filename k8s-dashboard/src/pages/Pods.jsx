@@ -53,9 +53,14 @@ export default function Pods() {
     setSelected(pod);
     setShowLogs(true);
     setLogsLoading(true);
-    const l = await fetchPodLogs(pod.namespace, pod.name);
-    setLogs(l);
-    setLogsLoading(false);
+    try {
+      const l = await fetchPodLogs(pod.namespace, pod.name, { raw: true });
+      setLogs(l);
+    } catch (err) {
+      setLogs(`Failed to load logs: ${err.message || 'unknown error'}`);
+    } finally {
+      setLogsLoading(false);
+    }
   };
 
   const handleDelete = async (pod) => {
@@ -205,6 +210,49 @@ export default function Pods() {
             </div>
 
             <div>
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Storage Volumes</h3>
+              {selected.volumes?.length ? (
+                <div className="space-y-2">
+                  {selected.volumes.map(volume => (
+                    <div key={volume.name} className="flex items-center justify-between gap-3 px-3 py-2 bg-surface-700/40 rounded-lg">
+                      <div>
+                        <p className="text-xs text-slate-300 font-mono">{volume.name}</p>
+                        <p className="text-[10px] text-slate-500">{volume.type}</p>
+                      </div>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-wide">Mounted volume</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">No storage volumes defined for this pod.</p>
+              )}
+            </div>
+
+            <div>
+              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Volume Mounts</h3>
+              {selected.containers?.some(container => container.volumeMounts?.length) ? (
+                <div className="space-y-2">
+                  {selected.containers.map(container => (
+                    container.volumeMounts?.length ? (
+                      <div key={container.name} className="bg-surface-700/40 rounded-lg p-3 space-y-2">
+                        <p className="text-xs font-semibold text-slate-300 font-mono">{container.name}</p>
+                        {container.volumeMounts.map(mount => (
+                          <div key={`${container.name}-${mount.name}-${mount.mountPath}`} className="flex items-center justify-between gap-3 text-xs">
+                            <span className="text-slate-300 font-mono">{mount.name}</span>
+                            <span className="text-slate-500 font-mono">{mount.mountPath}</span>
+                            <span className="text-slate-600">{mount.readOnly ? 'read-only' : 'read-write'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">No volume mounts detected on the pod containers.</p>
+              )}
+            </div>
+
+            <div>
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Events</h3>
               {selected.events.map((ev, i) => (
                 <div key={i} className="flex items-start gap-2 px-3 py-2 bg-surface-700/40 rounded-lg mb-1.5">
@@ -220,7 +268,7 @@ export default function Pods() {
 
             <div className="flex gap-3 pt-2 border-t border-surface-600">
               <button onClick={() => openLogs(selected)} className="btn-secondary flex items-center gap-2 text-xs">
-                <Terminal size={13} /> View Logs
+                <Terminal size={13} /> Raw Logs
               </button>
               <button onClick={() => { setSelected(null); setDeleteConfirm(selected); }} className="btn-danger flex items-center gap-2 text-xs ml-auto">
                 <Trash2 size={13} /> Delete
@@ -232,14 +280,26 @@ export default function Pods() {
 
       {/* Logs modal */}
       <Modal isOpen={showLogs} onClose={() => { setShowLogs(false); setSelected(null); }} title={`Logs: ${selected?.name}`} size="xl">
-        <div className="bg-surface-900 rounded-xl p-4 font-mono text-xs text-emerald-400 min-h-[300px] max-h-[60vh] overflow-y-auto whitespace-pre-wrap leading-relaxed">
-          {logsLoading ? (
-            <div className="flex items-center gap-2 text-slate-500">
-              <RefreshCw size={13} className="animate-spin" /> Fetching logs…
-            </div>
-          ) : (
-            logs || 'No logs available.'
-          )}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-500 uppercase tracking-wide">Raw Pod Logs</p>
+            <button
+              onClick={() => navigator.clipboard?.writeText(logs)}
+              className="btn-secondary text-[11px] px-3 py-1.5"
+              disabled={!logs}
+            >
+              Copy Raw Logs
+            </button>
+          </div>
+          <pre className="bg-surface-900 rounded-xl p-4 font-mono text-xs text-emerald-400 min-h-[300px] max-h-[60vh] overflow-y-auto whitespace-pre-wrap leading-relaxed">
+            {logsLoading ? (
+              <div className="flex items-center gap-2 text-slate-500">
+                <RefreshCw size={13} className="animate-spin" /> Fetching logs…
+              </div>
+            ) : (
+              logs || 'No logs available.'
+            )}
+          </pre>
         </div>
       </Modal>
 
